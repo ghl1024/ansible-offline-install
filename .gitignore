@@ -1,0 +1,9 @@
+# Offline bundle artifacts are published as Release assets, not committed.
+wheelhouse/
+*.tar.gz
+*.zip
+dist/
+__pycache__/
+*.pyc
+.venv/
+venv/
