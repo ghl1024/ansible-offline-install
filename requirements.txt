@@ -1,0 +1,5 @@
+# Pinned for reproducibility. Verified 2026-10-25 on PyPI.
+# ansible-core 2.18.x requires Python >= 3.11 on the control node.
+# To use a newer line (e.g. 2.21.x, requires Python >= 3.12),
+# change this pin, rebuild the offline bundle, and re-test.
+ansible-core==2.18.19

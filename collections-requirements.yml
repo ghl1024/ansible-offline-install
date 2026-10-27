@@ -1,0 +1,7 @@
+# Galaxy collections bundled into the offline package when the bundle is
+# built with WITH_COLLECTIONS=1. `ansible-galaxy collection download`
+# resolves and downloads their dependencies as well, so the bundle stays
+# fully installable offline. Edit this list to change what ships.
+collections:
+  - name: ansible.posix
+  - name: community.general
