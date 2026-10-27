@@ -31,6 +31,18 @@ v*:
             ls -lh dist
             test "$(ls dist/*.tar.gz | wc -l)" -eq 8
             test "$(ls dist/*.sha256 | wc -l)" -eq 8
+        - name: 创建 CNB Release
+          type: git:release
+          options:
+            title: ansible-offline-install ${CNB_BRANCH}
+            latest: true
+        - name: 上传 CNB Release 附件
+          image: cnbcool/attachments:latest
+          settings:
+            tag: ${CNB_BRANCH}
+            attachments:
+              - dist/*.tar.gz
+              - dist/*.sha256
         - name: 同步 Release 到 Gitee
           image: alpine:latest
           script: |
