@@ -1,0 +1,91 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  shellcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install shellcheck
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
+      - name: Shellcheck scripts
+        run: shellcheck install.sh scripts/make-offline-bundle.sh
+
+  install-test:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Rocky Linux 9 (x86_64)
+            runs_on: ubuntu-24.04
+            image: rockylinux:9
+            python_bin: python3.11
+            prep: dnf install -y python3.11 python3.11-pip python3.11-devel tar gzip findutils
+          - name: Rocky Linux 9 (ARM64)
+            runs_on: ubuntu-24.04-arm
+            image: rockylinux:9
+            python_bin: python3.11
+            prep: dnf install -y python3.11 python3.11-pip python3.11-devel tar gzip findutils
+          - name: Ubuntu 24.04 (x86_64)
+            runs_on: ubuntu-24.04
+            image: ubuntu:24.04
+            python_bin: python3
+            prep: apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y python3 python3-venv python3-pip tar gzip
+          - name: Ubuntu 24.04 (ARM64)
+            runs_on: ubuntu-24.04-arm
+            image: ubuntu:24.04
+            python_bin: python3
+            prep: apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y python3 python3-venv python3-pip tar gzip
+          - name: Ubuntu 22.04 (x86_64)
+            runs_on: ubuntu-24.04
+            image: ubuntu:22.04
+            python_bin: python3.11
+            prep: apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y software-properties-common && add-apt-repository -y universe && apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y python3.11 python3.11-venv tar gzip && python3.11 -m ensurepip --upgrade
+          - name: Ubuntu 22.04 (ARM64)
+            runs_on: ubuntu-24.04-arm
+            image: ubuntu:22.04
+            python_bin: python3.11
+            prep: apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y software-properties-common && add-apt-repository -y universe && apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y python3.11 python3.11-venv tar gzip && python3.11 -m ensurepip --upgrade
+          - name: Debian 12 (x86_64)
+            runs_on: ubuntu-24.04
+            image: debian:12
+            python_bin: python3
+            prep: apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y python3 python3-venv python3-pip tar gzip
+          - name: Debian 12 (ARM64)
+            runs_on: ubuntu-24.04-arm
+            image: debian:12
+            python_bin: python3
+            prep: apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y python3 python3-venv python3-pip tar gzip
+    runs-on: ${{ matrix.runs_on }}
+    container:
+      image: ${{ matrix.image }}
+    name: install-test (${{ matrix.name }})
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Python and build tools
+        run: ${{ matrix.prep }}
+
+      - name: Build offline bundle (with collections)
+        env:
+          PYTHON_BIN: ${{ matrix.python_bin }}
+          WITH_COLLECTIONS: "1"
+        run: bash scripts/make-offline-bundle.sh
+
+      - name: Install from the bundle, offline style
+        run: |
+          mkdir -p /tmp/bundle-run
+          tar -xzf dist/*.tar.gz -C /tmp/bundle-run
+          cd /tmp/bundle-run/ansible-offline-install-*-bundle
+          bash install.sh
+
+      - name: Verify Ansible and bundled collections
+        run: |
+          ansible --version
+          ansible localhost -m ping
+          ansible-galaxy collection list | grep -E "ansible\.posix|community\.general"

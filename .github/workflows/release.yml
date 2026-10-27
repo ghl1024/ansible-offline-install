@@ -1,0 +1,195 @@
+name: Release bundles
+
+# Builds, install-tests and publishes offline bundles for every supported
+# target (4 OSes x 2 architectures), on native runners (x86_64 and ARM64).
+# Public repositories get standard GitHub-hosted runners (including
+# ubuntu-24.04-arm) for free.
+#
+# - Push a tag like v2.0.0: bundles are built, tested and attached to the
+#   GitHub Release for that tag.
+# - Run manually (workflow_dispatch): bundles are built and tested and
+#   uploaded as workflow artifacts only (no Release is touched).
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Bundle version (without leading v)"
+        required: true
+        default: "2.0.0"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: el9-x86_64-py311
+            runs_on: ubuntu-24.04
+            image: rockylinux:9
+            python_bin: python3.11
+            prep: dnf install -y python3.11 python3.11-pip python3.11-devel tar gzip findutils
+          - target: el9-aarch64-py311
+            runs_on: ubuntu-24.04-arm
+            image: rockylinux:9
+            python_bin: python3.11
+            prep: dnf install -y python3.11 python3.11-pip python3.11-devel tar gzip findutils
+          - target: ubuntu2404-x86_64-py312
+            runs_on: ubuntu-24.04
+            image: ubuntu:24.04
+            python_bin: python3
+            prep: apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y python3 python3-venv python3-pip tar gzip
+          - target: ubuntu2404-aarch64-py312
+            runs_on: ubuntu-24.04-arm
+            image: ubuntu:24.04
+            python_bin: python3
+            prep: apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y python3 python3-venv python3-pip tar gzip
+          - target: ubuntu2204-x86_64-py311
+            runs_on: ubuntu-24.04
+            image: ubuntu:22.04
+            python_bin: python3.11
+            prep: apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y software-properties-common && add-apt-repository -y universe && apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y python3.11 python3.11-venv tar gzip && python3.11 -m ensurepip --upgrade
+          - target: ubuntu2204-aarch64-py311
+            runs_on: ubuntu-24.04-arm
+            image: ubuntu:22.04
+            python_bin: python3.11
+            prep: apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y software-properties-common && add-apt-repository -y universe && apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y python3.11 python3.11-venv tar gzip && python3.11 -m ensurepip --upgrade
+          - target: debian12-x86_64-py311
+            runs_on: ubuntu-24.04
+            image: debian:12
+            python_bin: python3
+            prep: apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y python3 python3-venv python3-pip tar gzip
+          - target: debian12-aarch64-py311
+            runs_on: ubuntu-24.04-arm
+            image: debian:12
+            python_bin: python3
+            prep: apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y python3 python3-venv python3-pip tar gzip
+    runs-on: ${{ matrix.runs_on }}
+    container:
+      image: ${{ matrix.image }}
+    name: bundle (${{ matrix.target }})
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve version
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+          else
+            echo "VERSION=${{ inputs.version }}" >> "$GITHUB_ENV"
+          fi
+
+      - name: Install Python and build tools
+        run: ${{ matrix.prep }}
+
+      - name: Build offline bundle (with collections)
+        env:
+          PYTHON_BIN: ${{ matrix.python_bin }}
+          WITH_COLLECTIONS: "1"
+        run: bash scripts/make-offline-bundle.sh
+
+      - name: Install-test the bundle on this target
+        run: |
+          mkdir -p /tmp/bundle-run
+          tar -xzf dist/*.tar.gz -C /tmp/bundle-run
+          cd /tmp/bundle-run/ansible-offline-install-*-bundle
+          bash install.sh
+          ansible localhost -m ping
+          ansible-galaxy collection list | grep -E "ansible\.posix|community\.general"
+
+      - name: Name the asset for this target
+        run: |
+          ASSET="ansible-offline-install-${VERSION}-${{ matrix.target }}"
+          mv dist/*.tar.gz "${ASSET}.tar.gz"
+          sha256sum "${ASSET}.tar.gz" > "${ASSET}.tar.gz.sha256"
+          echo "ASSET=${ASSET}" >> "$GITHUB_ENV"
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ASSET }}
+          path: |
+            ${{ env.ASSET }}.tar.gz
+            ${{ env.ASSET }}.tar.gz.sha256
+
+      - name: Attach to GitHub Release (tag pushes only)
+        if: github.event_name == 'push'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ${{ env.ASSET }}.tar.gz
+            ${{ env.ASSET }}.tar.gz.sha256
+
+  sync-gitee:
+    name: Sync release to Gitee
+    if: github.event_name == 'push'
+    needs: build
+    runs-on: ubuntu-latest
+    env:
+      GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
+      GITEE_REPO: ghl1024/ansible-offline-install
+      TAG: ${{ github.ref_name }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Check Gitee token is configured
+        id: gate
+        run: |
+          if [ -z "${GITEE_TOKEN}" ]; then
+            echo "proceed=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Secret GITEE_TOKEN is not set; skipping Gitee sync. Create a token at https://gitee.com/profile/personal_access_tokens and add it as a repository secret named GITEE_TOKEN."
+          else
+            echo "proceed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.gate.outputs.proceed == 'true'
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Download built bundles
+        if: steps.gate.outputs.proceed == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          pattern: ansible-offline-install-*
+          path: dist-sync
+          merge-multiple: true
+
+      - name: Push tag to Gitee (so the release target exists)
+        if: steps.gate.outputs.proceed == 'true'
+        run: |
+          git remote add gitee "https://ghl1024:${GITEE_TOKEN}@gitee.com/${GITEE_REPO}.git"
+          git push gitee "refs/tags/${TAG}"
+
+      - name: Create or reuse the Gitee release
+        if: steps.gate.outputs.proceed == 'true'
+        id: gitee_release
+        run: |
+          API="https://gitee.com/api/v5/repos/${GITEE_REPO}"
+          ID="$(curl -s -o /dev/null -w '%{http_code}' "${API}/releases/tags/${TAG}?access_token=${GITEE_TOKEN}" | grep -q 200 && curl -s "${API}/releases/tags/${TAG}?access_token=${GITEE_TOKEN}" | jq -r .id || true)"
+          if [ -z "${ID}" ] || [ "${ID}" = "null" ]; then
+            BODY="$(gh release view "${TAG}" --json body --jq .body 2>/dev/null || echo "Offline bundles synced from the GitHub release ${TAG}.")"
+            ID="$(curl -s -X POST "${API}/releases" \
+              --data-urlencode "access_token=${GITEE_TOKEN}" \
+              --data-urlencode "tag_name=${TAG}" \
+              --data-urlencode "name=${TAG}" \
+              --data-urlencode "body=${BODY}" \
+              --data-urlencode "target_commitish=${TAG}" | jq -r .id)"
+          fi
+          echo "Gitee release id: ${ID}"
+          echo "id=${ID}" >> "$GITHUB_OUTPUT"
+
+      - name: Upload bundles to the Gitee release
+        if: steps.gate.outputs.proceed == 'true'
+        run: |
+          API="https://gitee.com/api/v5/repos/${GITEE_REPO}"
+          for f in dist-sync/*; do
+            echo "Uploading ${f}"
+            curl -s -X POST "${API}/releases/${{ steps.gitee_release.outputs.id }}/attach_files" \
+              -F "access_token=${GITEE_TOKEN}" -F "file=@${f}" | jq -r '.name // .message'
+          done
