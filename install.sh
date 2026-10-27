@@ -5,6 +5,9 @@
 #
 # 界面语言 / UI language: 默认中文。英文：bash install.sh --lang en
 # 或环境变量 ANSIBLE_OFFLINE_LANG=en。Default is Chinese; use --lang en for English.
+# 提示文案里有需要原样打印给用户看的 $PATH 字样（不是变量展开），故文件级豁免 SC2016。
+# The hint messages intentionally contain a literal $PATH for the user to copy.
+# shellcheck disable=SC2016
 set -euo pipefail
 
 SCRIPT_LANG="${ANSIBLE_OFFLINE_LANG:-zh}"
@@ -65,8 +68,23 @@ t() {
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WHEELHOUSE="${WHEELHOUSE:-${SCRIPT_DIR}/wheelhouse}"
 REQUIREMENTS="${SCRIPT_DIR}/requirements.txt"
-PYTHON_BIN="${PYTHON_BIN:-python3}"
 MIN_PY="3.11"
+# 未显式指定 PYTHON_BIN 时自动探测 >= 3.11 的解释器：
+# EL9 的 python3 默认是 3.9、Ubuntu 22.04 是 3.10，即使装了 python3.11，
+# 直接用 python3 也会版本不够，所以按新到旧依次找。
+# Auto-detect a >= 3.11 interpreter when PYTHON_BIN is not set explicitly
+# (on EL9 python3 is 3.9 and on Ubuntu 22.04 it is 3.10 by default).
+if [ -z "${PYTHON_BIN:-}" ]; then
+  PYTHON_BIN=""
+  for cand in python3.13 python3.12 python3.11 python3; do
+    if command -v "${cand}" >/dev/null 2>&1 && "${cand}" -c 'import sys; sys.exit(0 if sys.version_info >= (3, 11) else 1)' 2>/dev/null; then
+      PYTHON_BIN="${cand}"
+      break
+    fi
+  done
+  # 都找不到时回落到 python3，让后面的预检给出友好的双语报错
+  [ -n "${PYTHON_BIN}" ] || PYTHON_BIN="python3"
+fi
 
 if [ "$(id -u)" -eq 0 ]; then
   INSTALL_DIR="${ANSIBLE_INSTALL_DIR:-/opt/ansible-offline}"
@@ -138,4 +156,4 @@ fi
 log "$(t verifying)"
 "${LINK_DIR}/ansible" --version
 "${LINK_DIR}/ansible" localhost -m ping
-log "$(t done)"
+log "$(t "done")"

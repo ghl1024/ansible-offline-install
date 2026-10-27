@@ -44,13 +44,13 @@ jobs:
           - name: Ubuntu 22.04 (x86_64)
             runs_on: ubuntu-24.04
             image: ubuntu:22.04
-            python_bin: python3.11
-            prep: apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y software-properties-common && add-apt-repository -y universe && apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y python3.11 python3.11-venv tar gzip && python3.11 -m ensurepip --upgrade
+            python_bin: /tmp/py311-venv/bin/python
+            prep: apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y software-properties-common && add-apt-repository -y universe && apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y python3.11 python3.11-venv tar gzip && python3.11 -m venv /tmp/py311-venv
           - name: Ubuntu 22.04 (ARM64)
             runs_on: ubuntu-24.04-arm
             image: ubuntu:22.04
-            python_bin: python3.11
-            prep: apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y software-properties-common && add-apt-repository -y universe && apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y python3.11 python3.11-venv tar gzip && python3.11 -m ensurepip --upgrade
+            python_bin: /tmp/py311-venv/bin/python
+            prep: apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y software-properties-common && add-apt-repository -y universe && apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y python3.11 python3.11-venv tar gzip && python3.11 -m venv /tmp/py311-venv
           - name: Debian 12 (x86_64)
             runs_on: ubuntu-24.04
             image: debian:12

@@ -185,6 +185,12 @@ rm -rf /opt/ansible-offline /usr/local/bin/ansible*
 rm -rf ~/ansible-offline ~/.local/bin/ansible*
 ```
 
+**Q：我在联网机器上打包时，连不上 PyPI 或 Galaxy 怎么办？**
+A：这正是本项目在国内平台设镜像的原因，分两种情况：
+
+- 只想装 Ansible：别自己打包了，直接去 Releases 下载现成离线包，Gitee、GitCode、CNB 都有（见「开源地址」一节），全程走国内网络，现成包里已经包含 collections。
+- 确实要自己打包（比如要换版本）：给 pip 换一个国内源，在打包命令前面加一个环境变量即可：`PIP_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple bash scripts/make-offline-bundle.sh`（示例是清华源，阿里云等其他国内源也可以）。但要提醒：collections 是从海外的 Galaxy 下载的，国内没有稳定镜像，这一步连不通时，请用上面下载现成包的办法。
+
 ## 5. 名词解释（看不懂术语时看这里）
 
 - **离线包**：把安装需要的全部文件提前打包好的一个压缩文件，拿到没网的机器上也能安装。
@@ -218,6 +224,7 @@ bash scripts/make-offline-bundle.sh
 - `WITH_COLLECTIONS=0`：只打包 Ansible 本体，不带 collections，包更小。
 - `PYTHON_BIN=python3.11`：指定用哪个 Python 打包（系统里有多个 Python 时）。
 - 想换 Ansible 版本：改 `requirements.txt` 里 `ansible-core` 的版本号再打包。
+- `PIP_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple`：海外网络不通时给 pip 换国内源（示例为清华源，也可换阿里云源）。
 
 ### 固定版本
 

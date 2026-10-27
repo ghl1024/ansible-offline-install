@@ -216,6 +216,12 @@ rm -rf /opt/ansible-offline /usr/local/bin/ansible*
 rm -rf ~/ansible-offline ~/.local/bin/ansible*
 ```
 
+**Q: The build machine cannot reach PyPI or Galaxy (no overseas network)?**
+A: This is exactly why this project keeps mirrors on China-based platforms:
+
+- If you just need Ansible installed: skip building and download a ready-made bundle from Releases - Gitee, GitCode and CNB all host them (see "Source repositories and mirrors"), no overseas network needed, and the bundles already include the collections.
+- If you do need to build (e.g. for a different Ansible version): point pip at a domestic mirror by prefixing the build command: `PIP_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple bash scripts/make-offline-bundle.sh` (Tsinghua mirror shown; Aliyun and others work too). Note: the collections are downloaded from Galaxy overseas and have no stable domestic mirror - if that step cannot connect, use a ready-made bundle instead.
+
 ## 5. Glossary (when a term is unclear)
 
 - **Offline bundle**: one archive file containing everything needed for
@@ -259,6 +265,9 @@ Options (environment variables):
   are installed).
 - To change the Ansible version, edit the `ansible-core` pin in
   `requirements.txt` before building.
+- `PIP_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple`: use a domestic
+  PyPI mirror when overseas networks are unreachable (Tsinghua shown;
+  Aliyun works too).
 
 ### Pinned version
 

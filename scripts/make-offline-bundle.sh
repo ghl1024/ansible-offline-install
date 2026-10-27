@@ -50,7 +50,18 @@ b() { printf '[打包 bundle] %s\n' "$(t "$@")"; }
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 VERSION="${VERSION:-2.0.0}"
-PYTHON_BIN="${PYTHON_BIN:-python3}"
+# 未显式指定 PYTHON_BIN 时自动探测 >= 3.11 的解释器（理由同 install.sh）
+# Auto-detect a >= 3.11 interpreter when PYTHON_BIN is not set explicitly.
+if [ -z "${PYTHON_BIN:-}" ]; then
+  PYTHON_BIN=""
+  for cand in python3.13 python3.12 python3.11 python3; do
+    if command -v "${cand}" >/dev/null 2>&1 && "${cand}" -c 'import sys; sys.exit(0 if sys.version_info >= (3, 11) else 1)' 2>/dev/null; then
+      PYTHON_BIN="${cand}"
+      break
+    fi
+  done
+  [ -n "${PYTHON_BIN}" ] || PYTHON_BIN="python3"
+fi
 WITH_COLLECTIONS="${WITH_COLLECTIONS:-1}"
 BUNDLE_NAME="ansible-offline-install-${VERSION}-bundle"
 OUT_DIR="${REPO_DIR}/dist"
@@ -88,5 +99,5 @@ tar -czf "${OUT_DIR}/${BUNDLE_NAME}.tar.gz" -C "${STAGE}" "${BUNDLE_NAME}"
 
 b sha256
 (cd "${OUT_DIR}" && sha256sum "${BUNDLE_NAME}.tar.gz" | tee "${BUNDLE_NAME}.tar.gz.sha256")
-b done "${OUT_DIR}/${BUNDLE_NAME}.tar.gz"
+b "done" "${OUT_DIR}/${BUNDLE_NAME}.tar.gz"
 b offline_hint "${BUNDLE_NAME}.tar.gz" "${BUNDLE_NAME}"

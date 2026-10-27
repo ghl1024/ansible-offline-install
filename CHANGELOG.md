@@ -29,6 +29,11 @@ targets modern distributions and the current ansible-core line only.
   supported OSes (EL 9, Ubuntu 24.04 / 22.04, Debian 12) on x86_64 and
   ARM64 - 8 targets in total - with SHA256 checksums. The CI install-test
   matrix covers the same 8 combinations.
+- Both scripts now auto-detect a Python >= 3.11 interpreter
+  (python3.13 / 3.12 / 3.11) when `PYTHON_BIN` is not set, because on
+  EL 9 `python3` is 3.9 and on Ubuntu 22.04 it is 3.10 even after
+  python3.11 is installed. (The first CI run caught exactly this on
+  Rocky Linux 9 and Ubuntu 22.04.)
 - Both scripts (`install.sh`, `scripts/make-offline-bundle.sh`) now print
   in Chinese by default, matching the primarily Chinese user base;
   `--lang en` or `ANSIBLE_OFFLINE_LANG=en` switches them to English.
