@@ -1,0 +1,6 @@
+include:
+  - .cnb/workflows/release.yml
+# CNB 只负责把 GitHub Release 同步到 Gitee（国内链路稳定）。
+# 离线包仍由 GitHub Actions 构建并发布到 GitHub Release，CNB 在 tag_push
+# 时等待其资产就绪后下载，再调用 .cnb/scripts/sync-release.sh 同步。
+# CNB only mirrors GitHub Releases to Gitee; bundles are built by GitHub Actions.

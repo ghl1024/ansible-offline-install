@@ -9,6 +9,11 @@ name: Release bundles
 #   GitHub Release for that tag.
 # - Run manually (workflow_dispatch): bundles are built and tested and
 #   uploaded as workflow artifacts only (no Release is touched).
+#
+# Mirroring the Release to Gitee is NOT done here: GitHub runners reach
+# gitee.com unreliably (connection resets). The CNB tag_push pipeline
+# (.cnb/workflows/release.yml) downloads the published assets and syncs
+# them to Gitee instead - same pattern as Ansible-Admin.
 
 on:
   push:
@@ -124,72 +129,3 @@ jobs:
           files: |
             ${{ env.ASSET }}.tar.gz
             ${{ env.ASSET }}.tar.gz.sha256
-
-  sync-gitee:
-    name: Sync release to Gitee
-    if: github.event_name == 'push'
-    needs: build
-    runs-on: ubuntu-latest
-    env:
-      GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
-      GITEE_REPO: ghl1024/ansible-offline-install
-      TAG: ${{ github.ref_name }}
-      GH_TOKEN: ${{ github.token }}
-    steps:
-      - name: Check Gitee token is configured
-        id: gate
-        run: |
-          if [ -z "${GITEE_TOKEN}" ]; then
-            echo "proceed=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::Secret GITEE_TOKEN is not set; skipping Gitee sync. Create a token at https://gitee.com/profile/personal_access_tokens and add it as a repository secret named GITEE_TOKEN."
-          else
-            echo "proceed=true" >> "$GITHUB_OUTPUT"
-          fi
-
-      - uses: actions/checkout@v4
-        if: steps.gate.outputs.proceed == 'true'
-        with:
-          fetch-depth: 0
-          fetch-tags: true
-
-      - name: Download built bundles
-        if: steps.gate.outputs.proceed == 'true'
-        uses: actions/download-artifact@v4
-        with:
-          pattern: ansible-offline-install-*
-          path: dist-sync
-          merge-multiple: true
-
-      - name: Push tag to Gitee (so the release target exists)
-        if: steps.gate.outputs.proceed == 'true'
-        run: |
-          git remote add gitee "https://ghl1024:${GITEE_TOKEN}@gitee.com/${GITEE_REPO}.git"
-          git push gitee "refs/tags/${TAG}"
-
-      - name: Create or reuse the Gitee release
-        if: steps.gate.outputs.proceed == 'true'
-        id: gitee_release
-        run: |
-          API="https://gitee.com/api/v5/repos/${GITEE_REPO}"
-          ID="$(curl -s -o /dev/null -w '%{http_code}' "${API}/releases/tags/${TAG}?access_token=${GITEE_TOKEN}" | grep -q 200 && curl -s "${API}/releases/tags/${TAG}?access_token=${GITEE_TOKEN}" | jq -r .id || true)"
-          if [ -z "${ID}" ] || [ "${ID}" = "null" ]; then
-            BODY="$(gh release view "${TAG}" --json body --jq .body 2>/dev/null || echo "Offline bundles synced from the GitHub release ${TAG}.")"
-            ID="$(curl -s -X POST "${API}/releases" \
-              --data-urlencode "access_token=${GITEE_TOKEN}" \
-              --data-urlencode "tag_name=${TAG}" \
-              --data-urlencode "name=${TAG}" \
-              --data-urlencode "body=${BODY}" \
-              --data-urlencode "target_commitish=${TAG}" | jq -r .id)"
-          fi
-          echo "Gitee release id: ${ID}"
-          echo "id=${ID}" >> "$GITHUB_OUTPUT"
-
-      - name: Upload bundles to the Gitee release
-        if: steps.gate.outputs.proceed == 'true'
-        run: |
-          API="https://gitee.com/api/v5/repos/${GITEE_REPO}"
-          for f in dist-sync/*; do
-            echo "Uploading ${f}"
-            curl -s -X POST "${API}/releases/${{ steps.gitee_release.outputs.id }}/attach_files" \
-              -F "access_token=${GITEE_TOKEN}" -F "file=@${f}" | jq -r '.name // .message'
-          done

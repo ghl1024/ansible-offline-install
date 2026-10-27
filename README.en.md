@@ -29,7 +29,7 @@ during installation.
   - [5. Glossary (when a term is unclear)](#5-glossary-when-a-term-is-unclear)
   - [6. Advanced usage](#6-advanced-usage)
     - [Bundled collections (already included)](#bundled-collections-already-included)
-    - [Build your own bundle](#build-your-own-bundle)
+    - [Build your own bundle](#build-your-own-bundle-to-change-the-version-or-the-bundled-collections)
     - [Pinned version](#pinned-version)
   - [7. Repository layout](#7-repository-layout)
   - [8. Roadmap](#8-roadmap)
@@ -37,21 +37,18 @@ during installation.
 
 ## 🌐 Source repositories and mirrors
 
-The project is published on four platforms with identical content; the
-mirrors are usually faster for downloads inside China:
+> The project is published on four platforms with identical content; the mirrors are usually faster for downloads inside China:
 
 | Platform | URL | Notes |
 | --- | --- | --- |
 | GitHub | https://github.com/ghl1024/ansible-offline-install | Primary repository: development and releases |
-| Gitee | https://gitee.com/ghl1024/ansible-offline-install | China mirror, releases synced automatically |
+| Gitee | https://gitee.com/ghl1024/ansible-offline-install | China mirror, releases auto-synced via CNB |
 | GitCode | https://gitcode.com/haydenguo/ansible-offline-install | China mirror |
 | CNB | https://cnb.cool/ghl1024/ansible-offline-install | China mirror |
 
 ## 1. What this does, in plain words
 
-Many company and datacenter servers are not allowed to reach the internet
-(an "air-gapped" environment). On such a machine, `pip install ansible`
-always fails, because it needs to download packages.
+> Many company and datacenter servers are not allowed to reach the internet (an "air-gapped" environment). On such a machine, `pip install ansible` always fails, because it needs to download packages.
 
 This project works around that in three steps:
 
@@ -66,8 +63,7 @@ This project works around that in three steps:
 
 ## 2. Before you start: check your server's info
 
-Run these three commands on your server and note the results; you will need
-them to pick the right bundle:
+- Run these three commands on your server and note the results; you will need them to pick the right bundle:
 
 ```bash
 cat /etc/os-release     # OS: Rocky Linux 9 / Ubuntu 24.04 / Debian 12 ...
@@ -75,32 +71,25 @@ uname -m                # CPU architecture: x86_64 or aarch64 (aarch64 = ARM64)
 python3 --version       # Python version: 3.11 or newer is required
 ```
 
-Supported systems (the machine Ansible is installed on, called the
-"control node"):
+- Supported systems (the machine Ansible is installed on, called the "control node"):
 
-| OS | Python |
-| --- | --- |
-| EL 9 family: Rocky Linux 9 / AlmaLinux 9 / RHEL 9 / CentOS Stream 9 | 3.11 (`python3.11` package) |
-| Ubuntu 24.04 | 3.12 (included by default) |
-| Ubuntu 22.04 | 3.11 (in the default repositories) |
-| Debian 12 | 3.11 (included by default) |
+    | OS | Python |
+    | --- | --- |
+    | EL 9 family: Rocky Linux 9 / AlmaLinux 9 / RHEL 9 / CentOS Stream 9 | 3.11 (`python3.11` package) |
+    | Ubuntu 24.04 | 3.12 (included by default) |
+    | Ubuntu 22.04 | 3.11 (in the default repositories) |
+    | Debian 12 | 3.11 (included by default) |
 
-Notes:
+- Notes:
 
-- **Root is not required.** A regular user can install (into their home
-  directory); installing as root makes Ansible available system-wide.
-- The machines Ansible will manage (managed nodes) need nothing special:
-  just SSH and any Python. That is Ansible's own rule, unrelated to this
-  project.
+  - **Root is not required.** A regular user can install (into their home directory); installing as root makes Ansible available system-wide.
+  - The machines Ansible will manage (managed nodes) need nothing special: just SSH and any Python. That is Ansible's own rule, unrelated to this project.
 
 ## 3. Install in 3 steps (beginner path)
 
 ### Step 1: Download the bundle that matches your server
 
-Go to the [Releases page](https://github.com/ghl1024/ansible-offline-install/releases).
-Release bundles are built and install-tested by GitHub Actions on real
-machines (including native ARM64). File names look like this, and every part
-means something:
+- Go to the [Releases page](https://github.com/ghl1024/ansible-offline-install/releases). Release bundles are built and install-tested by GitHub Actions on real machines (including native ARM64). File names look like this, and every part means something:
 
 ```
 ansible-offline-install-2.0.0-el9-aarch64-py311.tar.gz
@@ -108,26 +97,23 @@ ansible-offline-install-2.0.0-el9-aarch64-py311.tar.gz
          version 2.0.0      OS    arch    Python
 ```
 
-Match the info you collected above:
+- Match the info you collected above:
 
-| Your server | Download this bundle |
-| --- | --- |
-| Rocky / Alma / RHEL / CentOS Stream 9, x86_64 | `...-el9-x86_64-py311.tar.gz` |
-| Rocky / Alma / RHEL / CentOS Stream 9, ARM64 | `...-el9-aarch64-py311.tar.gz` |
-| Ubuntu 24.04, x86_64 | `...-ubuntu2404-x86_64-py312.tar.gz` |
-| Ubuntu 24.04, ARM64 | `...-ubuntu2404-aarch64-py312.tar.gz` |
-| Ubuntu 22.04, x86_64 | `...-ubuntu2204-x86_64-py311.tar.gz` |
-| Ubuntu 22.04, ARM64 | `...-ubuntu2204-aarch64-py311.tar.gz` |
-| Debian 12, x86_64 | `...-debian12-x86_64-py311.tar.gz` |
-| Debian 12, ARM64 | `...-debian12-aarch64-py311.tar.gz` |
+    | Your server | Download this bundle |
+    | --- | --- |
+    | Rocky / Alma / RHEL / CentOS Stream 9, x86_64 | `...-el9-x86_64-py311.tar.gz` |
+    | Rocky / Alma / RHEL / CentOS Stream 9, ARM64 | `...-el9-aarch64-py311.tar.gz` |
+    | Ubuntu 24.04, x86_64 | `...-ubuntu2404-x86_64-py312.tar.gz` |
+    | Ubuntu 24.04, ARM64 | `...-ubuntu2404-aarch64-py312.tar.gz` |
+    | Ubuntu 22.04, x86_64 | `...-ubuntu2204-x86_64-py311.tar.gz` |
+    | Ubuntu 22.04, ARM64 | `...-ubuntu2204-aarch64-py311.tar.gz` |
+    | Debian 12, x86_64 | `...-debian12-x86_64-py311.tar.gz` |
+    | Debian 12, ARM64 | `...-debian12-aarch64-py311.tar.gz` |
 
-Prebuilt bundles exist for all four OSes, on both x86_64 and ARM64 - just
-download the one you need. Build your own bundle only if you want a
-different Ansible version or a different set of collections (see
-"Build your own bundle" below).
+- Prebuilt bundles exist for all four OSes, on both x86_64 and ARM64 - just download the one you need.
+- Build your own bundle only if you want a different Ansible version or a different set of collections (see "Build your own bundle" below).
 
-If a matching `.sha256` file is offered next to the bundle, you can download
-it too and verify the file was not corrupted in transfer (optional):
+- If a matching `.sha256` file is offered next to the bundle, you can download it too and verify the file was not corrupted in transfer (optional):
 
 ```bash
 sha256sum -c ansible-offline-install-2.0.0-el9-aarch64-py311.tar.gz.sha256
@@ -136,8 +122,7 @@ sha256sum -c ansible-offline-install-2.0.0-el9-aarch64-py311.tar.gz.sha256
 
 ### Step 2: Copy the bundle to the offline server and extract it
 
-Copy the `.tar.gz` file to the server (USB, bastion host, internal file
-server), then:
+- Copy the `.tar.gz` file to the server (USB, bastion host, internal file server), then:
 
 ```bash
 tar xf ansible-offline-install-2.0.0-el9-aarch64-py311.tar.gz
@@ -150,9 +135,7 @@ cd ansible-offline-install-2.0.0-bundle
 bash install.sh
 ```
 
-The script prints its progress line by line (in Chinese by default; add
-`--lang en` for English) and runs a self-check at the end. Output containing
-`"ping": "pong"` means success:
+- The script prints its progress line by line (in Chinese by default; add `--lang en` for English) and runs a self-check at the end. Output containing `"ping": "pong"` means success:
 
 ```
 [ansible-offline] Verifying installation
@@ -163,8 +146,7 @@ localhost | SUCCESS => {
 [ansible-offline] Done. Ansible is ready, fully offline.
 ```
 
-Try `ansible --version` - if it prints a version, you are ready to write
-your first playbook.
+- Try `ansible --version` - if it prints a version, you are ready to write your first playbook.
 
 ## 4. FAQ (check here first)
 
@@ -219,7 +201,7 @@ rm -rf ~/ansible-offline ~/.local/bin/ansible*
 **Q: The build machine cannot reach PyPI or Galaxy (no overseas network)?**
 A: This is exactly why this project keeps mirrors on China-based platforms:
 
-- If you just need Ansible installed: skip building and download a ready-made bundle from Releases - Gitee, GitCode and CNB all host them (see "Source repositories and mirrors"), no overseas network needed, and the bundles already include the collections.
+- If you just need Ansible installed: skip building and download a ready-made bundle from the Releases on GitHub or Gitee (Gitee is the China mirror, see "Source repositories and mirrors"), and the bundles already include the collections.
 - If you do need to build (e.g. for a different Ansible version): point pip at a domestic mirror by prefixing the build command: `PIP_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple bash scripts/make-offline-bundle.sh` (Tsinghua mirror shown; Aliyun and others work too). Note: the collections are downloaded from Galaxy overseas and have no stable domestic mirror - if that step cannot connect, use a ready-made bundle instead.
 
 ## 5. Glossary (when a term is unclear)
@@ -239,24 +221,18 @@ A: This is exactly why this project keeps mirrors on China-based platforms:
 
 ### Bundled collections (already included)
 
-Bundles downloaded from Releases already contain `ansible.posix` and
-`community.general` (including their dependencies); `install.sh` installs
-them automatically, nothing extra to do. `collections-requirements.yml`
-lists them; edit it and rebuild (next section) to change the set.
+- Bundles downloaded from Releases already contain `ansible.posix` and `community.general` (including their dependencies); `install.sh` installs them automatically, nothing extra to do.
+- `collections-requirements.yml` lists them; edit it and rebuild (next section) to change the set.
 
-### Build your own bundle
+### Build your own bundle (to change the version or the bundled collections)
 
-Useful to change the Ansible version or the bundled collections.
-On an **online** machine with the **same** OS family, CPU architecture and
-Python version as the offline target, clone this repository and run:
+- On an **online** machine with the **same** OS family, CPU architecture and Python version as the offline target, clone this repository and run:
 
 ```bash
 bash scripts/make-offline-bundle.sh
 ```
 
-The result lands in `dist/`: `ansible-offline-install-2.0.0-bundle.tar.gz`
-plus its `.sha256` checksum file. Copy it to the offline machine and follow
-steps 2 and 3 above.
+> The result lands in `dist/`: `ansible-offline-install-2.0.0-bundle.tar.gz` plus its `.sha256` checksum file. Copy it to the offline machine and follow steps 2 and 3 above.
 
 Options (environment variables):
 
@@ -294,10 +270,7 @@ Listed in the order you will use them:
 - [x] CI: script checks + container install tests on EL 9, Ubuntu 24.04 / 22.04 and Debian 12, on x86_64 and ARM64
 - [x] Release bundles for x86_64 and ARM64, built, install-tested and published by GitHub Actions on native ARM64 runners
 
-Questions or requests: open an
-[Issue](https://github.com/ghl1024/ansible-offline-install/issues) and, if
-you can, include your OS version (the output of `cat /etc/os-release`) and
-the error message you saw.
+Questions or requests: open an [Issue](https://github.com/ghl1024/ansible-offline-install/issues) and, if you can, include your OS version (the output of `cat /etc/os-release`) and the error message you saw.
 
 ## 9. License
 

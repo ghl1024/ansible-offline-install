@@ -26,19 +26,18 @@
 
 ## 🌐 开源地址
 
-本项目同时发布在四个平台，内容一致，国内用户从镜像下载离线包通常更快：
+> 本项目同时发布在四个平台，内容一致，国内用户从镜像下载离线包通常更快：
 
 | 平台 | 地址 | 说明 |
 | --- | --- | --- |
 | GitHub | https://github.com/ghl1024/ansible-offline-install | 主仓库，开发与 Release 发布地 |
-| Gitee | https://gitee.com/ghl1024/ansible-offline-install | 国内镜像，Release 自动同步 |
+| Gitee | https://gitee.com/ghl1024/ansible-offline-install | 国内镜像，Release 由 CNB 自动同步 |
 | GitCode | https://gitcode.com/haydenguo/ansible-offline-install | 国内镜像 |
 | CNB | https://cnb.cool/ghl1024/ansible-offline-install | 国内镜像 |
 
 ## 1. 这是干什么的
 
-很多公司、机房的服务器不允许连接外网（俗称「气隙环境」），这时直接在服务器上
-`pip install ansible` 一定会失败，因为它要去网上下载。
+> 很多公司、机房的服务器不允许连接外网（俗称「气隙环境」），这时直接在服务器上执行 `pip install ansible` 一定会失败，因为它要去网上下载。
 
 这个项目的办法很简单，分三步：
 
@@ -50,7 +49,7 @@
 
 ## 2. 开始之前：先确认你的服务器信息
 
-在你的服务器上运行下面三条命令，记下结果，选包的时候要用：
+- 在你的服务器上运行下面三条命令，记下结果，选包的时候要用：
 
 ```bash
 cat /etc/os-release     # 看系统：Rocky Linux 9 / Ubuntu 24.04 / Debian 12 等
@@ -58,28 +57,25 @@ uname -m                # 看 CPU 架构：显示 x86_64 或 aarch64（aarch64 �
 python3 --version       # 看 Python 版本：需要 3.11 或以上
 ```
 
-支持的系统（要安装 Ansible 的那台机器，业内叫「控制节点」）：
+- 支持的系统（要安装 Ansible 的那台机器，业内叫「控制节点」）：
 
-| 系统 | Python |
-| --- | --- |
-| EL 9 系列：Rocky Linux 9 / AlmaLinux 9 / RHEL 9 / CentOS Stream 9 | 3.11（`python3.11` 包） |
-| Ubuntu 24.04 | 3.12（系统自带） |
-| Ubuntu 22.04 | 3.11（系统源自带） |
-| Debian 12 | 3.11（系统自带） |
+    | 系统 | Python |
+    | --- | --- |
+    | EL 9 系列：Rocky Linux 9 / AlmaLinux 9 / RHEL 9 / CentOS Stream 9 | 3.11（`python3.11` 包） |
+    | Ubuntu 24.04 | 3.12（系统自带） |
+    | Ubuntu 22.04 | 3.11（系统源自带） |
+    | Debian 12 | 3.11（系统自带） |
 
-其他说明：
+- 其他说明：
 
-- **不需要 root**：普通用户也可以安装（装到你的家目录里）；用 root 安装则全机器可用。
-- 被管理的那些机器（目标节点）不需要任何准备，它们只要有 SSH 和任意版本的 Python 就行，
-  这是 Ansible 本身的规矩，和本项目无关。
+  - **不需要 root**：普通用户也可以安装（装到你的家目录里）；用 root 安装则全机器可用。
+  - 被管理的那些机器（目标节点）不需要任何准备，它们只要有 SSH 和任意版本的 Python 就行，这是 Ansible 本身的规矩，和本项目无关。
 
 ## 3. 三步安装（新手路线）
 
 ### 第一步：下载适合你机器的离线包
 
-到本项目的 [Releases 页面](https://github.com/ghl1024/ansible-offline-install/releases)
-下载。Release 里的包由 GitHub Actions 在真实机器（包括 ARM64）上自动构建并完成
-安装测试。文件名长这样，每一段都有含义：
+- 到本项目的 [Releases 页面](https://github.com/ghl1024/ansible-offline-install/releases)下载。Release 里的包由 GitHub Actions 在真实机器（包括 ARM64）上自动构建并完成安装测试。文件名长这样，每一段都有含义：
 
 ```
 ansible-offline-install-2.0.0-el9-aarch64-py311.tar.gz
@@ -87,24 +83,22 @@ ansible-offline-install-2.0.0-el9-aarch64-py311.tar.gz
           版本 2.0.0       系统   架构    Python 版本
 ```
 
-对照你第一步查到的信息选包：
+- 对照你第一步查到的信息选包：
 
-| 你的服务器 | 下载这个包 |
-| --- | --- |
-| Rocky / Alma / RHEL / CentOS Stream 9，x86_64 | `...-el9-x86_64-py311.tar.gz` |
-| Rocky / Alma / RHEL / CentOS Stream 9，ARM64 | `...-el9-aarch64-py311.tar.gz` |
-| Ubuntu 24.04，x86_64 | `...-ubuntu2404-x86_64-py312.tar.gz` |
-| Ubuntu 24.04，ARM64 | `...-ubuntu2404-aarch64-py312.tar.gz` |
-| Ubuntu 22.04，x86_64 | `...-ubuntu2204-x86_64-py311.tar.gz` |
-| Ubuntu 22.04，ARM64 | `...-ubuntu2204-aarch64-py311.tar.gz` |
-| Debian 12，x86_64 | `...-debian12-x86_64-py311.tar.gz` |
-| Debian 12，ARM64 | `...-debian12-aarch64-py311.tar.gz` |
+    | 你的服务器 | 下载这个包 |
+    | --- | --- |
+    | Rocky / Alma / RHEL / CentOS Stream 9，x86_64 | `...-el9-x86_64-py311.tar.gz` |
+    | Rocky / Alma / RHEL / CentOS Stream 9，ARM64 | `...-el9-aarch64-py311.tar.gz` |
+    | Ubuntu 24.04，x86_64 | `...-ubuntu2404-x86_64-py312.tar.gz` |
+    | Ubuntu 24.04，ARM64 | `...-ubuntu2404-aarch64-py312.tar.gz` |
+    | Ubuntu 22.04，x86_64 | `...-ubuntu2204-x86_64-py311.tar.gz` |
+    | Ubuntu 22.04，ARM64 | `...-ubuntu2204-aarch64-py311.tar.gz` |
+    | Debian 12，x86_64 | `...-debian12-x86_64-py311.tar.gz` |
+    | Debian 12，ARM64 | `...-debian12-aarch64-py311.tar.gz` |
 
-上面四个系统的现成包都有（x86_64 与 ARM64 各一份），直接下载即可；
-只有想换 Ansible 版本、或增减随包 collections 时，才需要自己打包（见下面「自己打包」一节）。
-
-如果 Release 里同时提供了同名的 `.sha256` 文件，可以一起下载用来校验文件
-在传输中没有损坏（可选步骤）：
+- 上面四个系统的现成包都有（x86_64 与 ARM64 各一份），直接下载即可；
+- 只有想换 Ansible 版本、或增减随包 collections 时，才需要自己打包（见下面「自己打包」一节）。
+- 如果 Release 里同时提供了同名的 `.sha256` 文件，可以一起下载用来校验文件在传输中没有损坏（可选步骤）：
 
 ```bash
 sha256sum -c ansible-offline-install-2.0.0-el9-aarch64-py311.tar.gz.sha256
@@ -113,7 +107,7 @@ sha256sum -c ansible-offline-install-2.0.0-el9-aarch64-py311.tar.gz.sha256
 
 ### 第二步：把包拷到内网服务器并解压
 
-用 U 盘、跳板机或内网文件服务器把 `.tar.gz` 文件拷到服务器上，然后解压：
+- 用 U 盘、跳板机或内网文件服务器把 `.tar.gz` 文件拷到服务器上，然后解压：
 
 ```bash
 tar xf ansible-offline-install-2.0.0-el9-aarch64-py311.tar.gz
@@ -126,8 +120,7 @@ cd ansible-offline-install-2.0.0-bundle
 bash install.sh
 ```
 
-脚本会用中文逐行打印进度，最后自动做一次验证。看到类似下面的输出，
-出现 `"ping": "pong"` 就说明装好了：
+- 脚本会用中文逐行打印进度，最后自动做一次验证。看到类似下面的输出，出现 `"ping": "pong"` 就说明装好了：
 
 ```
 [ansible-offline] 正在验证安装
@@ -138,7 +131,7 @@ localhost | SUCCESS => {
 [ansible-offline] 完成。Ansible 已就绪，全程离线。
 ```
 
-再试一下 `ansible --version`，能打印版本号就可以开始写你的第一个 playbook 了。
+- 再试一下 `ansible --version`，能打印版本号就可以开始写你的第一个 playbook 了。
 
 ## 4. 常见问题（先看这里）
 
@@ -188,7 +181,7 @@ rm -rf ~/ansible-offline ~/.local/bin/ansible*
 **Q：我在联网机器上打包时，连不上 PyPI 或 Galaxy 怎么办？**
 A：这正是本项目在国内平台设镜像的原因，分两种情况：
 
-- 只想装 Ansible：别自己打包了，直接去 Releases 下载现成离线包，Gitee、GitCode、CNB 都有（见「开源地址」一节），全程走国内网络，现成包里已经包含 collections。
+- 只想装 Ansible：别自己打包了，直接去 GitHub 或 Gitee 的 Releases 下载现成离线包（国内网络选 Gitee，见「开源地址」一节），现成包里已经包含 collections。
 - 确实要自己打包（比如要换版本）：给 pip 换一个国内源，在打包命令前面加一个环境变量即可：`PIP_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple bash scripts/make-offline-bundle.sh`（示例是清华源，阿里云等其他国内源也可以）。但要提醒：collections 是从海外的 Galaxy 下载的，国内没有稳定镜像，这一步连不通时，请用上面下载现成包的办法。
 
 ## 5. 名词解释（看不懂术语时看这里）
@@ -202,22 +195,18 @@ A：这正是本项目在国内平台设镜像的原因，分两种情况：
 
 ### 离线安装 collections（已随包自带）
 
-从 Releases 下载的离线包里已经包含 `ansible.posix` 和 `community.general`
-（含它们的依赖），运行 `install.sh` 时会自动装好，无需任何额外操作。
-`collections-requirements.yml` 记录了清单细节；想增减 collection 名单，
-改这个文件后按下面一节自己打包即可。
+- 从 Releases 下载的离线包里已经包含 `ansible.posix` 和 `community.general`（含它们的依赖），运行 `install.sh` 时会自动装好，无需任何额外操作。
+- `collections-requirements.yml` 记录了清单细节；想增减 collection 名单，改这个文件后按下面一节自己打包即可。
 
 ### 自己打包（想换版本或增减 collections 时）
 
-在一台**能上网**、且系统 / CPU 架构 / Python 版本与离线机**一致**的机器上，
-克隆本仓库后运行：
+- 在一台**能上网**、且系统 / CPU 架构 / Python 版本与离线机**一致**的机器上，克隆本仓库后运行：
 
 ```bash
 bash scripts/make-offline-bundle.sh
 ```
 
-产物在仓库的 `dist/` 目录下：`ansible-offline-install-2.0.0-bundle.tar.gz` 和它的
-`.sha256` 校验文件。拷到离线机上按「三步安装」的第二、三步操作即可。
+> 产物在仓库的 `dist/` 目录下：`ansible-offline-install-2.0.0-bundle.tar.gz` 和它的 `.sha256` 校验文件。拷到离线机上按「三步安装」的第二、三步操作即可。
 
 可选项（环境变量）：
 
@@ -250,9 +239,7 @@ bash scripts/make-offline-bundle.sh
 - [x] CI：脚本检查 + EL 9、Ubuntu 24.04 / 22.04、Debian 12 容器安装测试，覆盖 x86_64 与 ARM64
 - [x] Release 离线包覆盖 x86_64 与 ARM64，由 GitHub Actions 在原生 ARM64 机器上自动构建、实测并发布
 
-遇到问题或有需求，欢迎到
-[Issues](https://github.com/ghl1024/ansible-offline-install/issues) 里留言，尽量附上
-你的系统版本（`cat /etc/os-release` 的输出）和报错截图或文字。
+遇到问题或有需求，欢迎到[Issues](https://github.com/ghl1024/ansible-offline-install/issues) 里留言，尽量附上你的系统版本（`cat /etc/os-release` 的输出）和报错截图或文字。
 
 ## 9. 许可证
 

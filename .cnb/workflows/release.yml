@@ -1,0 +1,39 @@
+v*:
+  tag_push:
+    - imports:
+        - https://cnb.cool/ghl1024/cloud-native-build/-/blob/main/env.yml
+      runner:
+        cpus: 2
+      stages:
+        - name: 等待并下载 GitHub Release 资产
+          image: alpine:latest
+          script: |
+            set -eu
+            apk add --no-cache curl jq
+            TAG="${CNB_BRANCH}"
+            API="https://api.github.com/repos/ghl1024/ansible-offline-install/releases/tags/${TAG}"
+            mkdir -p dist
+            # GitHub Actions 需要几分钟构建并发布资产，轮询等待 8 个离线包到齐
+            bundles=0
+            for i in $(seq 1 40); do
+              curl -sS --retry 3 --connect-timeout 15 --max-time 60 "${API}" -o release.json || true
+              bundles="$(jq '[.assets[]? | select(.name | endswith(".tar.gz"))] | length' release.json 2>/dev/null || echo 0)"
+              echo "attempt ${i}: ${bundles}/8 bundles on GitHub Release ${TAG}"
+              [ "${bundles}" -ge 8 ] && break
+              sleep 45
+            done
+            [ "${bundles}" -ge 8 ] || { echo "GitHub Release ${TAG} assets not ready in time" >&2; exit 1; }
+            jq -r '.body // ""' release.json > release-body.md
+            jq -r '.assets[] | [.browser_download_url, .name] | @tsv' release.json | while IFS="$(printf '\t')" read -r url name; do
+              echo "downloading ${name}"
+              curl -sSL --retry 5 --retry-delay 5 --connect-timeout 15 -o "dist/${name}" "${url}"
+            done
+            ls -lh dist
+            test "$(ls dist/*.tar.gz | wc -l)" -eq 8
+            test "$(ls dist/*.sha256 | wc -l)" -eq 8
+        - name: 同步 Release 到 Gitee
+          image: alpine:latest
+          script: |
+            set -eu
+            apk add --no-cache bash curl jq
+            bash .cnb/scripts/sync-release.sh
