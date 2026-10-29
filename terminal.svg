@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 440">
+  <rect x="4" y="4" width="672" height="432" rx="14" fill="#0d1117" stroke="#30363d" stroke-width="2"/>
+  <rect x="4" y="4" width="672" height="44" rx="14" fill="#161b22"/>
+  <rect x="4" y="30" width="672" height="18" fill="#161b22"/>
+  <circle cx="30" cy="26" r="7" fill="#ee0000"/>
+  <circle cx="56" cy="26" r="7" fill="#e3b341"/>
+  <circle cx="82" cy="26" r="7" fill="#3fb950"/>
+  <text x="340" y="32" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="14" fill="#8b949e">offline-server — bash</text>
+  <g font-family="Menlo, Consolas, monospace" font-size="16">
+    <text x="28" y="88" fill="#ff5a5a">$</text>
+    <text x="46" y="88" fill="#e6edf3">tar xf ansible-offline-install-2.0.0-el9-x86_64-py311.tar.gz</text>
+    <text x="28" y="122" fill="#ff5a5a">$</text>
+    <text x="46" y="122" fill="#e6edf3">cd ansible-offline-install-2.0.0-bundle</text>
+    <text x="28" y="156" fill="#ff5a5a">$</text>
+    <text x="46" y="156" fill="#e6edf3">bash install.sh</text>
+    <text x="28" y="204" fill="#8b949e">[ansible-offline] Creating isolated venv ...</text>
+    <text x="28" y="236" fill="#8b949e">[ansible-offline] Installing from local wheelhouse,</text>
+    <text x="28" y="264" fill="#8b949e">                  no network access at any point</text>
+    <text x="28" y="312" fill="#8b949e">[ansible-offline] Verifying installation</text>
+    <text x="28" y="344" fill="#3fb950">localhost | SUCCESS =&gt; { "ping": "pong" }</text>
+    <text x="28" y="392" fill="#e6edf3">[ansible-offline] Done. Ansible is ready, fully offline.</text>
+  </g>
+  <rect x="28" y="408" width="10" height="18" fill="#ee0000"/>
+</svg>
